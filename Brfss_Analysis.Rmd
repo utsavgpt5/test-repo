@@ -1,0 +1,125 @@
+---
+title: "Exploring the BRFSS data"
+output:
+  pdf_document: default
+  html_document:
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+* * *
+
+## Part 1: Data
+What is BRFSS:
+
+"The Behavioral Risk Factor Surveillance System (BRFSS) is the nation's premier system of health-related telephone surveys that collect state data about U.S. residents regarding their health-related risk behaviors, chronic health conditions, and use of preventive services. Established in 1984 with 15 states, BRFSS now collects data in all 50 states as well as the District of Columbia and three U.S. territories. BRFSS completes more than 400,000 adult interviews each year, making it the largest continuously conducted health survey system in the world." (Source-CDC website)
+
+How do they collect data:
+
+"BRFSS is a cross-sectional telephone survey that state health departments conduct monthly over landline telephones and cellular telephones with a standardized questionnaire and technical and methodological assistance from CDC. In conducting the BRFSS landline telephone survey, interviewers collect data from a randomly selected adult in a household. In conducting the cellular telephone version of the BRFSS questionnaire, interviewers collect data from an adult who participates by using a cellular telephone and resides in a private residence or college housing." (Source-CDC website)  
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+Is there difference in life satisfaction level of people based on weekly working hours? Is there any difference between genders?
+
+This is an interesting question as it helps to find how much people are satisfied with their lives with respect to how much time they spend at work. The difference between genders is also of interest as it helps to determine wether gender of person also affects satisfaction level.
+
+The analysis was done using the following variables:
+
+scntwrk1 - How Many Hours Per Week Do You Work
+lsatisfy - Satisfaction With Life
+sex      - Reported gender
+
+**Research quesion 2:**
+Wether people who consume Soda or Pop more than 60 times a month(twice daily) are more overweight/obese?
+
+This question helps to find linkage between people who consume Soda or Pop more than 2 times a day
+and their physical health.
+
+The analysis was done using the following variables:
+
+ssbsugar - How Often Do You Drink Regular Soda Or Pop?
+_rfbmi5  - Overweight Or Obese Calculated Variable
+
+**Research quesion 3:**
+Do people who exercise feel more energetic for more than 10 days in a month? Is there any difference between genders?
+
+This is an interesting question as we will get to know wether exercising makes you feel more energetic throughout the day and what is difference people who do any kind of exercise more than 10 times a month as compared to those who don't. Difference between genders is also interesting to determine which gender prefers exercising more.
+
+The analysis was done using the following variables:
+
+exerany2 - Exercise In Past 30 Days
+qlhlth2  - How Many Days Full Of Energy In Past 30 Days
+sex      - Reported gender
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+
+
+**Research quesion 1:**
+
+```{r}
+q1<-brfss2013 %>% select(scntwrk1,lsatisfy,sex)%>% na.omit()
+q1<-q1%>%mutate(lessavg=if_else(scntwrk1<=mean(brfss2013$scntwrk1,na.rm=TRUE),"lessthneqlavg","morethnavg"))
+prop.table(table(q1$lsatisfy,q1$lessavg),2)  
+g<-ggplot(q1)+aes(x=sex,fill=lsatisfy)+geom_bar(position = "fill")+facet_grid(.~lessavg)+xlab("Working more/less than average hours per Gender")+ylab("Proportion")+scale_fill_discrete(name="Satisfaction level")
+g
+
+```
+In this case, we can observe the following:
+
+1.We can see that no. of people who work more than average hours are more satisfied in life. 
+2.Females who work less than average hours are much more dissatisfied than males.
+
+However, it is not causal but yes, there is a relationship among variables.
+
+**Research quesion 2:**
+
+```{r}
+q2<-brfss2013%>%select(ssbsugar,X_rfbmi5) %>%na.omit
+q2<-q2 %>% mutate(ssbsugar_monthly=case_when(ssbsugar==0~0,ssbsugar>=100 & ssbsugar<200~((ssbsugar-100)*30),ssbsugar>=200 & ssbsugar<300~((ssbsugar-200)*4.28) ,ssbsugar>=300 & ssbsugar<400~(ssbsugar-300)))
+q2<-q2 %>% mutate(ssbsugar_excess=if_else(ssbsugar_monthly>60,"YES","NO"))
+q2<-q2 %>% mutate(ssbsugar_excess=if_else(ssbsugar_monthly>60,"YES","NO"))
+g2<-ggplot(q2)+aes(x=ssbsugar_excess,fill=X_rfbmi5)+geom_bar(position = "fill")+xlab("excess sugar")+ylab("Proportion")+scale_fill_discrete(name="obese/overweight")
+g2
+```
+In this case, we can observe the following:
+
+1.We notice there is a slight increase in number of obese/overweight people who consume Soda or Pop    drinks more htan twice daily in comparison to those who don't do the same.However, It is very   nominal so we need further methods to establish wether there is a causal relationship between the   variables
+
+
+**Research quesion 3:**
+
+```{r}
+q3<-brfss2013%>% select(exerany2,qlhlth2,sex) %>% na.omit()
+q3<-q3%>% mutate(EnrgyMorThn10Dys=if_else(qlhlth2>10,"TRUE","FALSE"))
+g3<-ggplot(q3)+aes(x=sex,fill=EnrgyMorThn10Dys)+geom_bar(position = "fill")+facet_grid(.~exerany2)+xlab("More than 10 Days full of energy By gender")+ylab("Proportion")+scale_fill_discrete(name="Exercise in past 30 days")
+g3
+```
+In this case, we can observe the following:
+
+1.There is a significant difference in number of full energy days of people who have exercised
+  more than 10 times past month in comparison to those who haven't. People who have done any physical activities have experienced more full energy days.
+  
+2. In comparison to males,less females have done physical activities  and yet experienced full energy days more than 10 times a month. On contrary, there are more females who have experienced less than 10 full energy days in a month in comparison to males.

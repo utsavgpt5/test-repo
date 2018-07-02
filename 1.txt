@@ -1,0 +1,18 @@
+> q1<-brfss2013 %>% select(scntwrk1,lsatisfy,sex)%>% na.omit()
+> q1<-q1%>%mutate(lessavg=if_else(scntwrk1<=mean(brfss2013$scntwrk1,na.rm=TRUE),"lessthneqlavg","morethnavg"))
+> prop.table(table(q1$lsatisfy,q1$lessavg),2)  
+> g<-ggplot(q1)+aes(x=sex,fill=lsatisfy)+geom_bar(position = "fill")+facet_grid(.~lessavg)+xlab("Working more/less than average hours per Gender")+ylab("Proportion")+scale_fill_discrete(name="Satisfaction level")
+> g
+
+> q2<-brfss2013%>%select(ssbsugar,X_rfbmi5,sex) %>%na.omit
+> q2<-q2 %>% mutate(ssbsugar_monthly=case_when(ssbsugar==0~0,ssbsugar>=100 & ssbsugar<200~((ssbsugar-100)*30),ssbsugar>=200 & ssbsugar<300~((ssbsugar-200)*4.28) ,ssbsugar>=300 & ssbsugar<400~(ssbsugar-300)))
+>q2<-q2 %>% mutate(ssbsugar_excess=if_else(ssbsugar_monthly>60,"YES","NO"))
+> q2<-q2 %>% mutate(ssbsugar_excess=if_else(ssbsugar_monthly>60,"YES","NO"))
+> g2<-ggplot(q2)+aes(x=ssbsugar_excess,fill=X_rfbmi5)+geom_bar(position = "fill")+xlab("excess sugar")+ylab("Proportion")+scale_fill_discrete(name="obese/overweight")
+> g2
+
+
+> q3<-brfss2013%>% select(exerany2,qlhlth2,sex) %>% na.omit()
+> q3<-q3%>% mutate(EnrgyMorThn10Dys=if_else(qlhlth2>10,"TRUE","FALSE"))
+> g3<-ggplot(q3)+aes(x=sex,fill=EnrgyMorThn10Dys)+geom_bar(position = "fill")+facet_grid(.~exerany2)+xlab("More than 10 Days full of energy By gender")+ylab("Proportion")+scale_fill_discrete(name="Exercise in past 30 days")
+>g3
