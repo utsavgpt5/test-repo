@@ -51,4 +51,17 @@ dev.copy(png,"plot4.png")
 dev.off()
 
 ##5
+balt_road<-NEI%>%filter(fips=="24510"&type=="ON-ROAD")%>%group_by(year)%>%summarize(Emissions=sum(Emissions))
+ggplot(balt_road,aes(x=as.factor(year),y=Emissions/1000,label=round(Emissions/1000,3),fill=year))+geom_bar(stat="identity")+xlab("year")+ylab(expression('PM'[2.5]*' Emissions in KiloTons'))+ggtitle(expression("PM"[2.5]*"Emissions for Motor vehicles in Baltimore City "))+geom_label(aes(fill=year),colour="white",fontface="bold")
+dev.copy(png,"plot5.png")
+dev.off()
 
+##6
+balt_road<-NEI%>%filter(fips=="24510"&type=="ON-ROAD")%>%group_by(year)%>%summarize(Emissions=sum(Emissions))
+LA_road<-NEI%>%filter(fips=="06037"&type=="ON-ROAD")%>%group_by(year)%>%summarize(Emissions=sum(Emissions))
+balt_road$County.Name<-"Baltimore City, Maryland"    
+LA_road$County.Name<-"Los Angeles County, California"
+LA_balt_road<-rbind(balt_road,LA_road)
+ggplot(LA_balt_road,aes(x=as.factor(year),y=Emissions/1000,fill=County.Name,label=round(Emissions/1000,2)))+geom_bar(stat="identity")+facet_grid(.~County.Name)+xlab("year")+ylab(expression('PM'[2.5]*'Emissions in kilotons'))+ggtitle(expression("PM"[2.5]*paste("Emissions in Baltimore and LA ","by motor vehicles", sep="")))+theme(axis.text.x = element_text(angle = 90, hjust = 1))+geom_label(aes(fill = County.Name), colour = "black")
+dev.copy(png,"plot6.png")
+dev.off()
